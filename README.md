@@ -15,5 +15,6 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
 ## Desc
 
-自分の部屋の気温を取り出し、S3 に保存し、Athena で分析する
-ラズパイ => Dynamodb => Lambda => Kinesis Firehose => S3
+自分の部屋の気温を取り出し、S3 に保存し、Athena で分析する<br />
+ラズパイ => Dynamodb => Lambda => Kinesis Firehose => S3<br />
+Go の勉強のためにあえて DynamoDB を挟む
