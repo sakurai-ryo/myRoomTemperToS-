@@ -14,25 +14,27 @@ import (
 )
 
 type StringNewImage struct {
-	S string
+	S string `json:"S, string"`
 }
 type IntNewImage struct {
-	N float64
+	N float64 `json:"N, float64"`
 }
 type StreamEntity struct {
-	timestamp StringNewImage
-	temper    IntNewImage
+	Timestamp StringNewImage `json:"timestamp"`
+	Temper    IntNewImage    `json:"temper"`
 }
 
 type Entity struct {
-	timestamp string  `json:"timestamp"`
-	temper    float64 `json:"temper"`
+	Timestamp events.DynamoDBAttributeValue `json:"timestamp, string"`
+	Temper    events.DynamoDBAttributeValue `json:"temper, float64"`
 }
 
 const maxUint = 4294967295
 
 // firehoseにデータを投入する
-func firehoseHandler(timestamp string, temper float64) error {
+func firehoseHandler(timestamp events.DynamoDBAttributeValue, temper events.DynamoDBAttributeValue) error {
+	fmt.Println("時刻: ", timestamp)
+	fmt.Println("気温: ", temper)
 
 	streamName := os.Getenv("FIREHOSE_NAME")
 
@@ -45,12 +47,11 @@ func firehoseHandler(timestamp string, temper float64) error {
 	records := []*firehose.Record{}
 
 	data := Entity{
-		timestamp: timestamp,
-		temper:    temper,
+		Timestamp: timestamp,
+		Temper:    temper,
 	}
 
 	b, err := json.Marshal(data)
-
 	if err != nil {
 		return fmt.Errorf("context: %v", err)
 	}
@@ -72,18 +73,24 @@ func firehoseHandler(timestamp string, temper float64) error {
 
 // Handler lambda
 func Handler(ctx context.Context, e events.DynamoDBEvent) {
-	fmt.Println(e)
-
 	for _, record := range e.Records {
-		s, _ := json.Marshal(record.Change.NewImage)
-		fmt.Println("stream =>", string(s))
 
-		var newImage StreamEntity
-		json.Unmarshal(s, &newImage)
+		timestamp := record.Change.NewImage["temper"]
+		temper := record.Change.NewImage["timestamp"]
 
-		err := firehoseHandler(newImage.timestamp.S, newImage.temper.N)
+		// s, err := json.Marshal(record.Change.NewImage)
+		// if err != nil {
+		// 	fmt.Println(err)
+		// }
+		// fmt.Println("stream =>", string(s))
 
-		if err != nil {
+		// var newImage StreamEntity
+		// if err := json.Unmarshal(s, &newImage); err != nil {
+		// 	fmt.Println(err)
+		// }
+		// fmt.Println("newImage: ", newImage)
+
+		if err := firehoseHandler(timestamp, temper); err != nil {
 			fmt.Println(err)
 		}
 	}
